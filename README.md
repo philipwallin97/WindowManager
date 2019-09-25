@@ -1,0 +1,2 @@
+# WindowManager
+Organize application windows

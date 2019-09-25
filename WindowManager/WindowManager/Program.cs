@@ -1,6 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,6 +14,116 @@ namespace WindowManager
     {
         static void Main(string[] args)
         {
+            //GenerateJson();
+            MoveWindows();
+            //MoveWindowsWithoutJson();
         }
+
+        const uint SWP_NOSIZE = 0x0001;
+        const uint SWP_NOZORDER = 0x0004;
+        const uint SWP_SHOWWINDOW = 0x0040;
+
+        [DllImport("user32.dll")]
+        public static extern bool GetWindowRect(IntPtr hwnd, ref Rect rectangle);
+
+        public struct Rect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        static void MoveWindow(string progName, int x, int y, int width, int height)
+        {
+            for (int i = 0; i < Process.GetProcessesByName(progName).Length; i++)
+            {
+                IntPtr ptr = Process.GetProcessesByName(progName)[i].MainWindowHandle;
+                SetWindowPos(ptr, IntPtr.Zero, x, y, width, height, SWP_SHOWWINDOW);
+            }
+        }
+
+        static void MoveWindows()
+        {
+            AppList appl = JsonConvert.DeserializeObject<AppList>(File.ReadAllText(Directory.GetCurrentDirectory() + "/applist.json"));
+
+            foreach (var app in appl.Apps)
+            {
+                MoveWindow(app.Name, app.X, app.Y, app.Width, app.Height);
+            }
+        }
+
+        static void MoveWindowsWithoutJson()
+        {
+            MoveWindow("Spotify", 225, 810, 1010, 600);
+            MoveWindow("Discord", 225, 0, 1010, 810);
+            MoveWindow("Chrome", 1227, 0, 2221, 1420);
+            MoveWindow("ApplicationFrameHost", 1227, 0, 2221, 1420); // Edge
+            MoveWindow("Steam", 225, 810, 1010, 600);
+            MoveWindow("steamwebhelper", 0, 0, 225, 1420); // Steam Friends
+        }
+
+        static void GenerateJson()
+        {
+            AppList appl = new AppList
+            {
+                Apps = new List<App>()
+            };
+
+            var procs = Process.GetProcesses();
+            var sortedProcs = procs.OrderBy(p => p.ProcessName);
+            foreach (var proc in sortedProcs)
+            {
+                if (!string.IsNullOrEmpty(proc.MainWindowTitle))
+                {
+                    Console.WriteLine("Title " + proc.MainWindowTitle);
+                    Console.WriteLine("Process " + proc.ProcessName);
+                    Console.WriteLine();
+
+                    IntPtr ptr = proc.MainWindowHandle;
+                    Rect r = new Rect();
+                    GetWindowRect(ptr, ref r);
+                    Console.WriteLine("X: " + r.Left);
+                    Console.WriteLine("Y: " + r.Top);
+                    Console.WriteLine("Height: " + (r.Right - r.Left));
+                    Console.WriteLine("Width: " + (r.Bottom - r.Top));
+
+                    App _t = new App
+                    {
+                        Name = proc.ProcessName,
+                        X = r.Left,
+                        Y = r.Top,
+                        Width = (r.Right - r.Left),
+                        Height = (r.Bottom - r.Top)
+                    };
+
+                    appl.Apps.Add(_t);
+                }
+            }
+
+            var jsonString = JsonConvert.SerializeObject(appl);
+
+            File.WriteAllText(Directory.GetCurrentDirectory() + "/applist.json", jsonString);
+        }
+    }
+
+    public class AppList
+    {
+        public List<App> Apps { get; set; }
+    }
+
+    public class App
+    {
+        public string Name { get; set; }
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int Height { get; set; }
+        public int Width { get; set; }
     }
 }

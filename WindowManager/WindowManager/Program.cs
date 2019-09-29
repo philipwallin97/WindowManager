@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WindowManager
 {
@@ -22,11 +20,8 @@ namespace WindowManager
             {
                 MoveWindows();
             }
-            //MoveWindowsWithoutJson();
         }
 
-        const uint SWP_NOSIZE = 0x0001;
-        const uint SWP_NOZORDER = 0x0004;
         const uint SWP_SHOWWINDOW = 0x0040;
 
         [DllImport("user32.dll")]
@@ -65,16 +60,6 @@ namespace WindowManager
             }
         }
 
-        static void MoveWindowsWithoutJson()
-        {
-            MoveWindow("Spotify", 225, 810, 1010, 600);
-            MoveWindow("Discord", 225, 0, 1010, 810);
-            MoveWindow("Chrome", 1227, 0, 2221, 1420);
-            MoveWindow("ApplicationFrameHost", 1227, 0, 2221, 1420); // Edge
-            MoveWindow("Steam", 225, 810, 1010, 600);
-            MoveWindow("steamwebhelper", 0, 0, 225, 1420); // Steam Friends
-        }
-
         static void GenerateJson()
         {
             AppList appl = new AppList
@@ -88,18 +73,9 @@ namespace WindowManager
             {
                 if (!string.IsNullOrEmpty(proc.MainWindowTitle))
                 {
-                    Console.WriteLine("Title " + proc.MainWindowTitle);
-                    Console.WriteLine("Process " + proc.ProcessName);
-                    Console.WriteLine();
-
                     IntPtr ptr = proc.MainWindowHandle;
                     Rect r = new Rect();
                     GetWindowRect(ptr, ref r);
-                    Console.WriteLine("X: " + r.Left);
-                    Console.WriteLine("Y: " + r.Top);
-                    Console.WriteLine("Height: " + (r.Right - r.Left));
-                    Console.WriteLine("Width: " + (r.Bottom - r.Top));
-
                     App _t = new App
                     {
                         Name = proc.ProcessName,

@@ -14,8 +14,14 @@ namespace WindowManager
     {
         static void Main(string[] args)
         {
-            //GenerateJson();
-            MoveWindows();
+            if (args.Length > 0)
+            {
+                GenerateJson();
+            }
+            else
+            {
+                MoveWindows();
+            }
             //MoveWindowsWithoutJson();
         }
 

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,13 +12,17 @@ namespace WindowManager
     {
         static void Main(string[] args)
         {
-            if (args.Length > 0)
+            if (args != null)
             {
-                GenerateJson();
-            }
-            else
-            {
-                MoveWindows();
+                string path = Directory.GetCurrentDirectory() + "/" + args[0] + ".json";
+                if (File.Exists(path))
+                {
+                    MoveWindows(args[0]);
+                }
+                else
+                {
+                    GenerateJson(args[0]);
+                }
             }
         }
 
@@ -50,9 +54,9 @@ namespace WindowManager
             }
         }
 
-        static void MoveWindows()
+        static void MoveWindows(string profile)
         {
-            AppList appl = JsonConvert.DeserializeObject<AppList>(File.ReadAllText(Directory.GetCurrentDirectory() + "/applist.json"));
+            AppList appl = JsonConvert.DeserializeObject<AppList>(File.ReadAllText(Directory.GetCurrentDirectory() + "/" + profile + ".json"));
 
             foreach (var app in appl.Apps)
             {
@@ -60,7 +64,7 @@ namespace WindowManager
             }
         }
 
-        static void GenerateJson()
+        static void GenerateJson(string profile)
         {
             AppList appl = new AppList
             {
@@ -91,7 +95,7 @@ namespace WindowManager
 
             var jsonString = JsonConvert.SerializeObject(appl);
 
-            File.WriteAllText(Directory.GetCurrentDirectory() + "/applist.json", jsonString);
+            File.WriteAllText(Directory.GetCurrentDirectory() + "/" + profile + ".json", jsonString);
         }
     }
 
